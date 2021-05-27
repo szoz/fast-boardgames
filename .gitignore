@@ -153,3 +153,5 @@ Thumbs.db
 
 # End of https://www.toptal.com/developers/gitignore/api/python
 .idea
+database_restore/*.sql
+database_restore/*.md
