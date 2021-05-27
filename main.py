@@ -1,8 +1,7 @@
 from fastapi import FastAPI
 
+from routers import misc, items
+
 app = FastAPI()
-
-
-@app.get("/")
-def read_root():
-    return {"Hello": "World"}
+app.include_router(misc.router, tags=['miscellaneous'])
+app.include_router(items.router)
