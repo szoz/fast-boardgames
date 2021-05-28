@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, PositiveInt
 
 
 def to_camel(string: str):
@@ -18,5 +18,16 @@ class ConfiguredModel(BaseModel):
 
 class Category(ConfiguredModel):
     """Boardgame category schema."""
-    id: int
+    id: PositiveInt
     name: str
+
+
+class Boardgame(ConfiguredModel):
+    """Boardgame schema."""
+    id: PositiveInt
+    name: str
+    year: int
+    score: float
+    complexity: float
+    brief: str
+    description: str
