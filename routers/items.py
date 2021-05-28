@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Response
+from fastapi import APIRouter, Depends, Response, Path, HTTPException
 from sqlalchemy.orm import Session
 from typing import List
 from pydantic import PositiveInt
@@ -27,3 +27,15 @@ async def get_boardgames(response: Response, db: Session = Depends(get_db),
         .limit(limit).offset(offset).all()
 
     return records
+
+
+@router.get('/boardgames/{id}', response_model=schemas.Boardgame, responses={404: {'description': 'Not Found'}},
+            tags=['boardgames'])
+async def get_boardgame(boardgame_id: PositiveInt = Path(..., alias='id'), db: Session = Depends(get_db)):
+    """Return boardgame based on given id."""
+    record = db.query(models.Boardgames).get(boardgame_id)
+
+    if not record:
+        raise HTTPException(status_code=404, detail='record with given id not found')
+
+    return record

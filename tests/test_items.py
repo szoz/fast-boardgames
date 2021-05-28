@@ -55,3 +55,19 @@ class TestBoardgames:
         assert len(payloads[1]) == 10
         assert len(payloads[2]) == 10
         assert payloads[0] == payloads[1] + payloads[2]
+
+
+def test_boardgame(client):
+    """Test '/boardgames/{id}' endpoint."""
+    test_path = '/boardgames/{id}'
+    test_id = 5
+    invalid_ids = [-2, 0, 999]
+
+    responses_invalid = [client.get(test_path.format(id=invalid_id)) for invalid_id in invalid_ids]
+    response_valid = client.get(test_path.format(id=test_id))
+
+    for response in responses_invalid:
+        assert response.status_code in [404, 422]
+    assert response_valid.status_code == 200
+    assert type(response_valid.json()) is dict
+    assert response_valid.json()['id'] == test_id
