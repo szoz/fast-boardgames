@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, Response, Path, HTTPException
+from sqlalchemy import desc
 from sqlalchemy.orm import Session
 from typing import List
 from pydantic import PositiveInt
@@ -18,12 +19,22 @@ async def get_categories(db: Session = Depends(get_db)):
 
 @router.get('/boardgames', response_model=List[schemas.Boardgame], tags=['boardgames'])
 async def get_boardgames(response: Response, db: Session = Depends(get_db),
-                         limit: PositiveInt = 20, page: PositiveInt = 1):
+                         limit: PositiveInt = 20, page: PositiveInt = 1,
+                         sort: schemas.BoardgameSortEnum = schemas.BoardgameSortEnum.score_,
+                         complexity: schemas.BoardgameComplexityEnum = None):
     """Return list of all boardgames with given sorting and pagination params."""
     response.headers['X-Total-Count'] = str(db.query(models.Boardgames).count())
     offset = limit * (page - 1)
+    order = desc(sort.lstrip('-')) if sort.value.startswith('-') else sort
+    order_secondary = desc('id') if sort.value.startswith('-') else 'id'
 
-    records = db.query(models.Boardgames) \
+    base_query = db.query(models.Boardgames)
+    if complexity:
+        base_query = base_query.filter(complexity.minimum <= models.Boardgames.complexity) \
+            .filter(models.Boardgames.complexity < complexity.maximum)
+
+    records = base_query \
+        .order_by(order, order_secondary) \
         .limit(limit).offset(offset).all()
 
     return records

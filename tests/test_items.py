@@ -56,6 +56,23 @@ class TestBoardgames:
         assert len(payloads[2]) == 10
         assert payloads[0] == payloads[1] + payloads[2]
 
+    @pytest.mark.parametrize('key', ['score', 'complexity', 'name'])
+    def test_sorting(self, client, key):
+        """Test response sorting"""
+        display_keys = ['score', 'complexity', 'name']
+
+        responses_asc = client.get(self.test_path, params={'sort': key, 'limit': 100})
+        responses_desc = client.get(self.test_path, params={'sort': f'-{key}', 'limit': 100})
+        payloads_asc = [{key: value for key, value in record.items()
+                         if key in display_keys}
+                        for record in responses_asc.json()]
+        payloads_desc = [{key: value for key, value in record.items()
+                          if key in display_keys}
+                         for record in responses_desc.json()]
+
+        assert sorted(payloads_asc, key=lambda item: item[key]) == payloads_asc
+        assert sorted(payloads_desc, key=lambda item: item[key], reverse=True) == payloads_desc
+
 
 def test_boardgame(client):
     """Test '/boardgames/{id}' endpoint."""
