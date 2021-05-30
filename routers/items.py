@@ -14,27 +14,32 @@ router = APIRouter()
 @router.get('/categories', response_model=List[schemas.Category], tags=['category'])
 async def get_categories(db: Session = Depends(get_db)):
     """Return list of all categories."""
-    return db.query(models.Category).all()
+    return db.query(models.Categories).all()
 
 
 @router.get('/boardgames', response_model=List[schemas.Boardgame], tags=['boardgames'])
 async def get_boardgames(response: Response, db: Session = Depends(get_db),
                          limit: PositiveInt = 20, page: PositiveInt = 1,
-                         sort: schemas.BoardgameSortEnum = schemas.BoardgameSortEnum.score_,
-                         complexity: schemas.BoardgameComplexityEnum = None):
+                         category: str = None, complexity: schemas.BoardgameComplexityEnum = None,
+                         sort: schemas.BoardgameSortEnum = schemas.BoardgameSortEnum.score_):
     """Return list of all boardgames with given sorting and pagination params."""
     response.headers['X-Total-Count'] = str(db.query(models.Boardgames).count())
+
     offset = limit * (page - 1)
     order = desc(sort.lstrip('-')) if sort.value.startswith('-') else sort
     order_secondary = desc('id') if sort.value.startswith('-') else 'id'
 
     base_query = db.query(models.Boardgames)
+
+    if category:
+        base_query = base_query.join(models.Boardgames.categories) \
+            .filter(models.Categories.name.ilike(category))
+
     if complexity:
         base_query = base_query.filter(complexity.minimum <= models.Boardgames.complexity) \
             .filter(models.Boardgames.complexity < complexity.maximum)
 
-    records = base_query \
-        .order_by(order, order_secondary) \
+    records = base_query.order_by(order, order_secondary) \
         .limit(limit).offset(offset).all()
 
     return records

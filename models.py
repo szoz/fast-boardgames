@@ -1,14 +1,21 @@
-from sqlalchemy import Column, String, Integer, Float
+from sqlalchemy import Table, Column, ForeignKey, String, Integer, Float
+from sqlalchemy.orm import relationship
 
 from database import Base
 
+boardgame_categories = Table('boardgame_categories', Base.metadata,
+                             Column('id', Integer, nullable=False, primary_key=True),
+                             Column('boardgame_id', Integer, ForeignKey('boardgames.id')),
+                             Column('category_id', Integer, ForeignKey('categories.id')))
 
-class Category(Base):
+
+class Categories(Base):
     """Boardgame category database model."""
     __tablename__ = 'categories'
 
     id = Column(Integer, nullable=False, primary_key=True)
     name = Column(String)
+    boardgames = relationship('Boardgames', secondary=boardgame_categories, back_populates='categories')
 
 
 class Boardgames(Base):
@@ -22,3 +29,4 @@ class Boardgames(Base):
     complexity = Column(Float)
     brief = Column(String)
     description = Column(String)
+    categories = relationship('Categories', secondary=boardgame_categories, back_populates='boardgames')

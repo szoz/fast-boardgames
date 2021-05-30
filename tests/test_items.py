@@ -73,6 +73,30 @@ class TestBoardgames:
         assert sorted(payloads_asc, key=lambda item: item[key]) == payloads_asc
         assert sorted(payloads_desc, key=lambda item: item[key], reverse=True) == payloads_desc
 
+    def test_filter_complexity(self, client):
+        """Test response filter by complexity level."""
+        filter_values = {'simple': [1, 2], 'easy': [2, 3], 'medium': [3, 4], 'hard': [4, 5]}
+
+        responses = [client.get(self.test_path, params={'complexity': value}) for value in filter_values]
+        payloads = [response.json() for response in responses]
+
+        for payload, (minimum, maximum) in zip(payloads, filter_values.values()):
+            assert all(minimum <= record['complexity'] < maximum
+                       for record in payload)
+
+    def test_filter_category(self, client):
+        """Test response filter by category"""
+        categories_path = '/categories'
+
+        all_categories = [record['name'] for record in client.get(categories_path).json()]
+        cased_categories = [all_categories[0], all_categories[1].upper(), all_categories[2].lower()]
+        responses = [client.get(self.test_path, params={'category': category}) for category in cased_categories]
+        payloads = [response.json() for response in responses]
+
+        for payload, category in zip(payloads, all_categories[:3]):
+            assert all(category in [element['name'] for element in record['categories']]
+                       for record in payload)
+
 
 def test_boardgame(client):
     """Test '/boardgames/{id}' endpoint."""

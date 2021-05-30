@@ -1,5 +1,6 @@
 from pydantic import BaseModel, PositiveInt
 from enum import Enum
+from typing import List
 
 
 def to_camel(string: str):
@@ -60,3 +61,4 @@ class Boardgame(ConfiguredModel):
     complexity: float
     brief: str
     description: str
+    categories: List[Category]
