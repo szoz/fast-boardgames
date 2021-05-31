@@ -28,6 +28,8 @@ def test_categories(client):
 class TestBoardgames:
     """Test '/boardgames' endpoint."""
     test_path = '/boardgames'
+    categories_path = '/categories'
+    display_keys = ['score', 'complexity', 'name']
 
     def test_basic(self, client):
         """Test basic response parameters."""
@@ -56,22 +58,22 @@ class TestBoardgames:
         assert len(payloads[2]) == 10
         assert payloads[0] == payloads[1] + payloads[2]
 
-    @pytest.mark.parametrize('key', ['score', 'complexity', 'name'])
-    def test_sorting(self, client, key):
+    @pytest.mark.parametrize('key', display_keys)
+    def test_sorting(self, client, key, extra_params=None):
         """Test response sorting"""
-        display_keys = ['score', 'complexity', 'name']
+        if extra_params is None:
+            extra_params = {}
+        response_asc = client.get(self.test_path, params={'sort': key, 'limit': 100, **extra_params})
+        response_desc = client.get(self.test_path, params={'sort': f'-{key}', 'limit': 100, **extra_params})
+        payload_asc = [{key: value for key, value in record.items()
+                        if key in self.display_keys}
+                       for record in response_asc.json()]
+        payload_desc = [{key: value for key, value in record.items()
+                         if key in self.display_keys}
+                        for record in response_desc.json()]
 
-        responses_asc = client.get(self.test_path, params={'sort': key, 'limit': 100})
-        responses_desc = client.get(self.test_path, params={'sort': f'-{key}', 'limit': 100})
-        payloads_asc = [{key: value for key, value in record.items()
-                         if key in display_keys}
-                        for record in responses_asc.json()]
-        payloads_desc = [{key: value for key, value in record.items()
-                          if key in display_keys}
-                         for record in responses_desc.json()]
-
-        assert sorted(payloads_asc, key=lambda item: item[key]) == payloads_asc
-        assert sorted(payloads_desc, key=lambda item: item[key], reverse=True) == payloads_desc
+        assert sorted(payload_asc, key=lambda item: item[key]) == payload_asc
+        assert sorted(payload_desc, key=lambda item: item[key], reverse=True) == payload_desc
 
     def test_filter_complexity(self, client):
         """Test response filter by complexity level."""
@@ -86,9 +88,7 @@ class TestBoardgames:
 
     def test_filter_category(self, client):
         """Test response filter by category"""
-        categories_path = '/categories'
-
-        all_categories = [record['name'] for record in client.get(categories_path).json()]
+        all_categories = [record['name'] for record in client.get(self.categories_path).json()]
         cased_categories = [all_categories[0], all_categories[1].upper(), all_categories[2].lower()]
         responses = [client.get(self.test_path, params={'category': category}) for category in cased_categories]
         payloads = [response.json() for response in responses]
@@ -96,6 +96,22 @@ class TestBoardgames:
         for payload, category in zip(payloads, all_categories[:3]):
             assert all(category in [element['name'] for element in record['categories']]
                        for record in payload)
+
+    def test_filter_sort(self, client):
+        """Test sorting in response filtered by category"""
+        category = client.get(self.categories_path).json()[0]['name']
+
+        response_asc = client.get(self.test_path, params={'sort': 'name', 'category': category})
+        response_desc = client.get(self.test_path, params={'sort': '-name', 'category': category})
+        payloads_asc = [{key: value for key, value in record.items()
+                         if key in self.display_keys}
+                        for record in response_asc.json()]
+        payloads_desc = [{key: value for key, value in record.items()
+                          if key in self.display_keys}
+                         for record in response_desc.json()]
+
+        assert sorted(payloads_asc, key=lambda item: item['name']) == payloads_asc
+        assert sorted(payloads_desc, key=lambda item: item['name'], reverse=True) == payloads_desc
 
 
 def test_boardgame(client):

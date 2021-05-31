@@ -26,8 +26,8 @@ async def get_boardgames(response: Response, db: Session = Depends(get_db),
     response.headers['X-Total-Count'] = str(db.query(models.Boardgames).count())
 
     offset = limit * (page - 1)
-    order = desc(sort.lstrip('-')) if sort.value.startswith('-') else sort
-    order_secondary = desc('id') if sort.value.startswith('-') else 'id'
+    order = desc(f"boardgames_{sort.lstrip('-')}") if sort.value.startswith('-') else f"boardgames_{sort}"
+    order_secondary = desc('boardgames_id') if sort.value.startswith('-') else 'boardgames_id'
 
     base_query = db.query(models.Boardgames)
 
