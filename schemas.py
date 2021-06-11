@@ -1,4 +1,4 @@
-from pydantic import BaseModel, PositiveInt
+from pydantic import BaseModel, PositiveInt, EmailStr
 from enum import Enum
 from typing import List
 
@@ -62,3 +62,9 @@ class Boardgame(ConfiguredModel):
     brief: str
     description: str
     categories: List[Category]
+
+
+class User(ConfiguredModel):
+    """User without password schema."""
+    name: str
+    email: EmailStr
