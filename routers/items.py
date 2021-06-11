@@ -11,7 +11,7 @@ import models
 router = APIRouter()
 
 
-@router.get('/categories', response_model=List[schemas.Category], tags=['category'])
+@router.get('/categories', response_model=List[schemas.Category], tags=['categories'])
 async def get_categories(db: Session = Depends(get_db)):
     """Return list of all categories."""
     return db.query(models.Categories).all()
