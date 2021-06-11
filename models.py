@@ -30,3 +30,13 @@ class Boardgames(Base):
     brief = Column(String)
     description = Column(String)
     categories = relationship('Categories', secondary=boardgame_categories, back_populates='boardgames')
+
+
+class Users(Base):
+    """User database model."""
+    __tablename__ = 'users'
+
+    id = Column(Integer, nullable=False, primary_key=True)
+    name = Column(String)
+    email = Column(String)
+    password = Column(String)
